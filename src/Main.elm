@@ -4,7 +4,6 @@ import Browser
 import Day01.Chronal_Calibration as ChronalCalibration
 import Day02.Inventory_Management_System as InventoryManagementSystem
 import Html exposing (Html, div, text)
-import Set exposing (Set)
 
 
 
@@ -44,9 +43,16 @@ update msg model =
 view : Model -> Html Msg
 view model =
     div []
-        [ div [] [ text <| String.fromInt model.chronalCalibration.sum ]
-        , div [] [ text <| String.fromInt model.chronalCalibration.dubled ]
-        , div [] [ text <| String.fromInt model.inventoryManagementSystem.checksum ]
+        [ div []
+            [ text "Day 1: Chronal Calibration"
+            , div [] [ text (String.fromInt model.chronalCalibration.sumOfFrequencies) ]
+            , div [] [ text (String.fromInt model.chronalCalibration.repeatedFrequency) ]
+            ]
+        , div []
+            [ text "Day 2: Inventory Management System"
+            , div [] [ text (String.fromInt model.inventoryManagementSystem.checksum) ]
+            , div [] (List.map (\element -> div [] [ text element ]) model.inventoryManagementSystem.commonLetters)
+            ]
         ]
 
 

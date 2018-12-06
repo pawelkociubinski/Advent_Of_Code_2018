@@ -1,7 +1,8 @@
-module Day01.Input exposing (input)
+module Day01.Input exposing (puzzleInput)
 
 
-input =
+puzzleInput : String
+puzzleInput =
     """
 -8
 -18

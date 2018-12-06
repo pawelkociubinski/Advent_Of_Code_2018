@@ -1,11 +1,55 @@
 module Day02.Inventory_Management_System exposing (Model, init)
 
-import Day02.Input exposing (input)
+import Day02.Input exposing (puzzleInput)
 import Dict exposing (Dict)
-import Html exposing (Html, div, text)
+import Set exposing (Set)
 
 
-updatefunc item =
+incrament : Int -> Int
+incrament value =
+    value + 1
+
+
+findOccurrencesFrequency : ( Int, Int ) -> List (List Int) -> ( Int, Int )
+findOccurrencesFrequency tuple arr =
+    case arr of
+        [] ->
+            tuple
+
+        head :: tail ->
+            if List.member 2 head && List.member 3 head then
+                findOccurrencesFrequency (Tuple.mapBoth incrament incrament tuple) tail
+
+            else if List.member 2 head then
+                findOccurrencesFrequency (Tuple.mapFirst incrament tuple) tail
+
+            else if List.member 3 head then
+                findOccurrencesFrequency (Tuple.mapSecond incrament tuple) tail
+
+            else
+                findOccurrencesFrequency tuple tail
+
+
+type alias OccurrencesFrequency =
+    ( Int, Int )
+
+
+getOccurrencesFrequency : List Occurrences -> OccurrencesFrequency
+getOccurrencesFrequency arr =
+    findOccurrencesFrequency ( 0, 0 ) arr
+
+
+type alias Checksum =
+    Int
+
+
+getChecksum : OccurrencesFrequency -> Checksum
+getChecksum occurrences =
+    Tuple.first occurrences * Tuple.second occurrences
+
+
+updateDict : Maybe Int -> Maybe Int
+updateDict item =
     case item of
         Nothing ->
             Just 1
@@ -14,22 +58,84 @@ updatefunc item =
             Just (i + 1)
 
 
-rec dict arr =
+findLetterOccurrences : Dict Char Int -> List Char -> Dict Char Int
+findLetterOccurrences dict arr =
     case arr of
         [] ->
             dict
 
         head :: tail ->
             if Dict.member head dict then
-                rec (Dict.update head updatefunc dict) tail
+                findLetterOccurrences (Dict.update head updateDict dict) tail
 
             else
-                rec (Dict.insert head 1 dict) tail
+                findLetterOccurrences (Dict.insert head 1 dict) tail
 
 
-incrament : Int -> Int
-incrament value =
-    value + 1
+getLetterOccurrences : List Char -> Dict Char Int
+getLetterOccurrences letters =
+    findLetterOccurrences Dict.empty letters
+
+
+filter : comparable -> Int -> Bool
+filter _ value =
+    value == 2 || value == 3
+
+
+findOccurrences : String -> Occurrences
+findOccurrences id =
+    id
+        |> String.toList
+        |> getLetterOccurrences
+        |> Dict.filter filter
+        |> Dict.values
+
+
+type alias Occurrences =
+    List Int
+
+
+getOccurrences : PuzzleInput -> List Occurrences
+getOccurrences puzzleInput =
+    List.map findOccurrences puzzleInput
+
+
+trimByPosition : Int -> String -> String
+trimByPosition position sentence =
+    String.slice 0 position sentence ++ String.dropLeft (position + 1) sentence
+
+
+findCommonLetter : Int -> Set String -> String -> List String -> List String -> Set String
+findCommonLetter position result pattern arr collection =
+    case arr of
+        [] ->
+            if position == String.length pattern then
+                result
+
+            else
+                findCommonLetter (position + 1) result pattern collection collection
+
+        head :: tail ->
+            if trimByPosition position pattern == trimByPosition position head then
+                Set.insert (trimByPosition position pattern) result
+
+            else
+                findCommonLetter position result pattern tail collection
+
+
+findCommonLetters : Set String -> PuzzleInput -> PuzzleInput -> Set String
+findCommonLetters result arr collection =
+    case arr of
+        [] ->
+            result
+
+        head :: tail ->
+            findCommonLetters (findCommonLetter 0 result head tail tail) tail collection
+
+
+getCommonLetters : PuzzleInput -> Set String
+getCommonLetters puzzleInput =
+    findCommonLetters Set.empty puzzleInput puzzleInput
 
 
 isNotEmpty : String -> Bool
@@ -37,96 +143,46 @@ isNotEmpty value =
     not (String.isEmpty value)
 
 
-rec2 : ( Int, Int ) -> List (List Int) -> ( Int, Int )
-rec2 tuple arr =
-    case arr of
-        [] ->
-            tuple
-
-        head :: tail ->
-            let
-                hasTwo =
-                    List.member 2 head
-
-                hasThree =
-                    List.member 3 head
-            in
-            if hasTwo && hasThree then
-                rec2 (Tuple.mapBoth incrament incrament tuple) tail
-
-            else if hasTwo then
-                rec2 (Tuple.mapFirst incrament tuple) tail
-
-            else if hasThree then
-                rec2 (Tuple.mapSecond incrament tuple) tail
-
-            else
-                rec2 tuple tail
-
-
-getOccurrences : List (List Int) -> ( Int, Int )
-getOccurrences arr =
-    let
-        defaultValue =
-            ( 0, 0 )
-    in
-    rec2 defaultValue arr
-
-
-getChecksum : ( Int, Int ) -> Int
-getChecksum occurrences =
-    Tuple.first occurrences * Tuple.second occurrences
-
-
-
--- Filter out values other then value two and value three
-
-
-filterout : comparable -> Int -> Bool
-filterout _ value =
-    value == 2 || value == 3
-
-
-iteration : String -> List Int
-iteration item =
-    item
-        |> String.split ""
-        |> rec Dict.empty
-        |> Dict.filter filterout
-        |> Dict.values
-
-
-qwert : List String -> List (List Int)
-qwert arr =
-    List.map iteration arr
-
-
-format : String -> List String
-format inputs =
-    inputs
-        |> String.split "\n"
+format : String -> PuzzleInput
+format puzzleInput =
+    puzzleInput
+        |> String.words
         |> List.map String.trim
         |> List.filter isNotEmpty
 
 
 
--- MODEL
+-- Model
 
 
 type alias Model =
     { checksum : Int
-    , common : String
+    , commonLetters : CommonsList
     }
+
+
+type alias CommonsList =
+    List String
+
+
+type alias PuzzleInput =
+    List String
 
 
 init : Model
 init =
     let
         checksum =
-            input
+            puzzleInput
                 |> format
-                |> qwert
                 |> getOccurrences
+                |> getOccurrencesFrequency
                 |> getChecksum
+
+        commonLetters =
+            puzzleInput
+                |> format
+                |> getCommonLetters
+                |> Set.toList
     in
-    Model checksum ""
+    Model checksum commonLetters

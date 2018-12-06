@@ -1,7 +1,8 @@
-module Day02.Input exposing (input)
+module Day02.Input exposing (puzzleInput)
 
 
-input =
+puzzleInput : String
+puzzleInput =
     """
 mgdsdwqulhrinkatfjoyzxcbvq
 megsdwpulhrinkasfjdyzxcbvk

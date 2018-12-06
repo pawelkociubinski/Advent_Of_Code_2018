@@ -1,53 +1,28 @@
 module Day01.Chronal_Calibration exposing (Model, init)
 
-import Day01.Input exposing (input)
+import Day01.Input exposing (puzzleInput)
 import Html exposing (Html, div, text)
 import Set exposing (Set)
 
 
-type alias Model =
-    { sum : Int
-    , dubled : Int
-    }
-
-
-init : Model
-init =
-    let
-        sum =
-            input
-                |> format
-                |> List.sum
-
-        dubled =
-            input
-                |> format
-                |> repeatedFrequency
-    in
-    Model sum dubled
-
-
-findRepeatingSum : Int -> Set Int -> List Int -> List Int -> Int
-findRepeatingSum sum seen nums allNums =
-    case nums of
+findRepeatedFrequency : Int -> Set Int -> PuzzleInput -> PuzzleInput -> Int
+findRepeatedFrequency sum calculatedFrequencies vertexes collection =
+    case vertexes of
         [] ->
-            findRepeatingSum sum seen allNums allNums
+            findRepeatedFrequency sum calculatedFrequencies collection collection
 
         head :: tail ->
-            let
-                summm =
-                    sum + head
-            in
-            if Set.member summm seen then
-                summm
+            if Set.member (sum + head) calculatedFrequencies then
+                sum + head
 
             else
-                findRepeatingSum summm (Set.insert summm seen) tail allNums
+                findRepeatedFrequency (sum + head) (Set.insert (sum + head) calculatedFrequencies) tail collection
 
 
-repeatedFrequency : List Int -> Int
-repeatedFrequency input =
-    findRepeatingSum 0 Set.empty input input
+
+getRepeatedFrequency : PuzzleInput -> Int
+getRepeatedFrequency puzzleInput =
+    findRepeatedFrequency 0 Set.empty puzzleInput puzzleInput
 
 
 isNotEmpty : String -> Bool
@@ -56,16 +31,52 @@ isNotEmpty value =
 
 
 toInt : String -> Int
-toInt item =
-    item
+toInt value =
+    value
         |> String.toInt
         |> Maybe.withDefault 0
 
 
-format : String -> List Int
-format input =
-    input
-        |> String.split "\n"
+format : String -> PuzzleInput
+format puzzleInput =
+    puzzleInput
+        |> String.words
         |> List.map String.trim
         |> List.filter isNotEmpty
         |> List.map toInt
+
+
+
+-- MODEL
+
+
+type alias Model =
+    { sumOfFrequencies : Int
+    , repeatedFrequency : Int
+    }
+
+
+type alias PuzzleInput =
+    List Int
+
+
+init : Model
+init =
+    let
+        sumOfFrequencies =
+            puzzleInput
+                |> format
+                |> List.sum
+
+        repeatedFrequency =
+            puzzleInput
+                |> format
+                |> getRepeatedFrequency
+    in
+    Model sumOfFrequencies repeatedFrequency
+
+myfunc : Int -> Int -> Int
+myfunc a b =
+a + b
+
+myfunca 1 2
